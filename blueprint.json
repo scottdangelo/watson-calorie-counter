@@ -1,0 +1,39 @@
+{
+  "name": "Calorie counter mobile app using IBM Visual Recognition",
+  "description": "A mobile app that uses Watson Visual Recognition to provide nutritional analysis of captured food images.",
+  "thumbnailURL": "blueprint/thumbnail.svg",
+  "appIconURL": "blueprint/appicon.svg",
+  "previewURLs": [],
+  "type": "WEB",
+  "tags": [
+    "mobile",
+    "node",
+    "watson"
+  ],
+  "generators": {
+    "node": [
+      "generator-starterkit-content-downloader",
+      "generator-ibm-cloud-enablement"
+    ]
+  },
+  "generatorOptions": {
+    "generator-starterkit-content-downloader": {
+      "registry": "https://npm-registry.whitewater.ibm.com",
+      "scope": "@arf",
+      "version": "latest"
+    },
+    "generator-ibm-cloud-enablement": {
+      "version": "latest"
+    }
+  },
+  "requiredCapabilities": [
+    "visualRecognition"
+  ],
+  "requiredCapabilitiesURLs": {
+    "visualRecognition": "https://console.bluemix.net/catalog/services/visual-recognition"
+  },
+  "servicePlans": {
+    "visualRecognition": "free"
+  },
+  "email": "cloud@us.ibm.com"
+}
