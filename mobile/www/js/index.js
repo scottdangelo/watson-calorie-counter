@@ -31,8 +31,6 @@ function onDevice(){
           config = data;
           console.log(config);
             apiURL = config.BLUEMIX_SERVER_URL;
-            appId = config.NUTRITIONIX_APP_ID;
-            appKey = config.NUTRITIONIX_APP_KEY;
         });
     var win = function (r) {
     console.log("Code = " + r.responseCode);
@@ -57,7 +55,7 @@ function onDevice(){
                 document.getElementById("labels").innerHTML = html;
                 var resultCalorie = Response.data.classes[0].class;
                 console.log(resultCalorie);
-                getResult(resultCalorie);
+                //getResult(resultCalorie);
     }
     var fail = function (error) {
     alert("An error has occurred: Code = " + error.code);
