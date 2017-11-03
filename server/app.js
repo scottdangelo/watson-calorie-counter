@@ -43,13 +43,14 @@ application.post("/uploadpic", function (req, result) {
             const filePath = JSON.parse(JSON.stringify(files));
             const params = {
                 image_file: fs.createReadStream(filePath.myPhoto.path),
-                classifier_ids: ["food"]
+                classifier_ids: process.env.CUSTOM_CLASSIFIER
             };
             visual_recognition.classify(params, function (err, res) {
                 if (err) {
                     console.log(err);
                 } else {
                     const labelsvr = JSON.parse(JSON.stringify(res)).images[0].classifiers[0];
+                    console.log("labelsvr: " + labelsvr);
                     result.send({data: labelsvr});
                 }
             });
