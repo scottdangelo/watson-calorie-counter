@@ -39,7 +39,7 @@ This journey contains several pieces. The app server communicates with the Watso
 
 ## Deploy the Server Application to Bluemix
 
-[![Deploy to Bluemix](https://deployment-tracker.mybluemix.net/stats/19a3d5f0934a2950b8c1b2b813b98d30/button.svg)](https://bluemix.net/deploy?repository=https://github.com/IBM/watson-calorie-counter.git)
+[![Deploy to Bluemix](https://deployment-tracker.mybluemix.net/stats/19a3d5f0934a2950b8c1b2b813b98d30/button.svg)](https://bluemix.net/deploy?repository=https://github.com/scottdangelo/watson-calorie-counter.git)
 
 1. Press the above ``Deploy to Bluemix`` button and then click on ``Deploy``.
 
