@@ -27,7 +27,7 @@ const vcapServices = require("vcap_services");
 const credentials = vcapServices.getCredentials("watson_vision_combined");
 
 const visual_recognition = watson.visual_recognition({
-    api_key: credentials.api_key,
+    api_key: credentials.api_key, 
     version: "v3",
     version_date: "2016-05-20"
 });
@@ -45,10 +45,12 @@ application.post("/uploadpic", function (req, result) {
                 image_file: fs.createReadStream(filePath.myPhoto.path),
                 classifier_ids: process.env.CUSTOM_CLASSIFIER
             };
+            console.log("params: " + JSON.parse(JSON.stringify(params.classifier_ids)));
             visual_recognition.classify(params, function (err, res) {
                 if (err) {
                     console.log(err);
                 } else {
+                    console.log("response: " + res);
                     const labelsvr = JSON.parse(JSON.stringify(res)).images[0].classifiers[0];
                     console.log("labelsvr: " + labelsvr);
                     result.send({data: labelsvr});
