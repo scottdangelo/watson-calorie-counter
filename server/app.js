@@ -25,6 +25,7 @@ const application = express();
 const formidable = require("formidable");
 const vcapServices = require("vcap_services");
 const credentials = vcapServices.getCredentials("watson_vision_combined");
+const child_process = require("child_process");
 
 const visual_recognition = watson.visual_recognition({
     api_key: "f2e7cae6557d6386aaa13465545062319f84fa0d",
@@ -46,51 +47,99 @@ var custom_classifier = null;
 
 function listClassifiersPromise(){
   var class_id;
+  var classifiers;
   return new Promise(function(resolve, reject){
     visual_recognition.listClassifiers({},
       function(err, response) {
         if(err)
           reject(err);
-        else
-          class_id = JSON.parse(JSON.stringify(result)).classifiers[0]["classifier_id"]; 
+        else{
+          classifiers = JSON.parse(JSON.stringify(response)).classifiers;
+          console.log("classifiers: " + classifiers[0]);
+          if (classifiers[0] == null || classifiers[0] == undefined) {
+            console.log("got here")
+            resolve();
+            return;
+          }
+          class_id = JSON.parse(JSON.stringify(response)).classifiers[0]["classifier_id"]; 
           console.log("class_id: " + class_id);
           if (~class_id.indexOf('dogs')){
           custom_classifier = class_id
           console.log("custom_classifier: " + custom_classifier);
           }
           resolve(JSON.parse(JSON.stringify(response)));
+        } //end else
       })
   })
 }
   
 function CreateClassifierPromise(){
   return new Promise(function(resolve, reject){
-    if (custom_classifier != null){
-      resolve;
+    console.log("CreateClassifierPromise custom_classifier: " + custom_classifier);
+    if (custom_classifier){
+      resolve();
+      console.log("Have customClassifier, resolve and return"):
+      return;
     }
-    else
-    var params = {
-      name: 'vehicle-damage-analyzer',
-  BrokenWindshield_positive_examples: fs.createReadStream('./data/BrokenWindshield.zip'),
-    FlatTire_positive_examples: fs.createReadStream('./data/FlatTire.zip'),
-    MotorcycleAccident_positive_examples: fs.createReadStream('./data/MotorcycleAccident.zip'),
-    Vandalism_positive_examples: fs.createReadStream('./data/Vandalism.zip'),
-  negative_examples: fs.createReadStream('./data/Negatives.zip')
+    else{
+      var params = {
+        name: 'dogs',
+        Beagle_positive_examples: fs.createReadStream('./dog_data/Beagle.zip'),
+        Husky_positive_examples: fs.createReadStream('./dog_data/Husky.zip'), 
+        GoldenRetriever_positive_examples: fs.createReadStream('./dog_data/GoldenRetriever.zip'),
+        negative_examples: fs.createReadStream('./dog_data/Cats.zip')
+      };
+
+    visual_recognition.createClassifier(params,
+      function(err, response) {
+        if (err){
+          console.log(err);
+          reject(err);
+        }
+        else{
+          console.log(JSON.stringify(response, null, 2));
+          resolve();
+        }
+      });
+  }
+});
 };
 
-  visual_recognition.createClassifier(params,
-    function(err, response) {
-      if (err)
-        console.log(err);
-      else
-        console.log(JSON.stringify(response, null, 2));
-    })
+function pollListClassifiersPromise(){
+  var class_id;
+  var classifiers;
+  var i = 0;
+  return new Promise(function(resolve, reject){
+    while (i<10 && custom_classifer = null){
+    visual_recognition.listClassifiers({},
+      function(err, response) {
+        if(err)
+          reject(err);
+        else{
+          if (classifiers[0] == null || classifiers[0] == undefined) {
+            console.log("model building iteration: " + i)
+            child_process.execSync("sleep 5");
+            i++;
+            continue;
+          }
+          class_id = JSON.parse(JSON.stringify(response)).classifiers[0]["classifier_id"]; 
+          console.log("Created class_id: " + class_id);
+          if (~class_id.indexOf('dogs')){
+          custom_classifier = class_id
+          console.log("Created custom_classifier: " + custom_classifier);
+          }
+          resolve(JSON.parse(JSON.stringify(response)));
+          return;
+        } //end else
+      })
+  }//end while
   })
-};
+}
 
 function init_class(){
   listClassifiersPromise()
-  .then(CreateClassifierPromise);
+  .then(CreateClassifierPromise())
+  .then(pollListClassifiersPromise());
 }
 
 function init_classifier(){
@@ -111,9 +160,8 @@ function init_classifier(){
    
 };
   
-init_class();
 console.log("before: custom_class: " + custom_classifier);
-//init_classifier()
+init_class();
 console.log("after: custom_class: " + custom_classifier);
 
 application.use(express.static(__dirname + "/public"));
