@@ -43,8 +43,8 @@ WatsonVisRecSetup.prototype.getVisRecList = function(params) {
   return new Promise((resolve, reject) => {
     this.vizRecClient.listClassifiers({}, (err,response) => {
       if (err) {
-        console.error(err);
-        return reject(new Error('Failed to get VisualRecognition classifiers.'));
+        console.log('Failed to get VisualRecognition classifiers.');
+        return resolve(params);
       } else {
         console.log("getVisRecList response: " + JSON.stringify(response, null, 2))
         const classifiers = response.classifiers;
@@ -57,7 +57,9 @@ WatsonVisRecSetup.prototype.getVisRecList = function(params) {
             return resolve(response);
           }
         }
-        return reject(new Error('Failed to get VisualRecognition classifier.'));
+        return resolve(params);
+        //return resolve(response);
+     //   return reject(new Error('Failed to get VisualRecognition classifier.'));
       }
     });
   });
@@ -80,15 +82,14 @@ WatsonVisRecSetup.prototype.createVisRecClassifier = function(params) {
   return new Promise((resolve, reject) => {
     // No existing classifier_id found, so create it.
     console.log('Creating VisualRecognition classifier...');
-    const createClassifierParams = {
+    var createClassifierParams = {
         name: 'dogs',
-        Beagle_positive_examples: fs.createReadStream('../dog_data/Beagle.zip'),
-        Husky_positive_examples: fs.createReadStream('../dog_data/Husky.zip'), 
-        GoldenRetriever_positive_examples: fs.createReadStream('../dog_data/GoldenRetriever.zip'),
-        negative_examples: fs.createReadStream('../dog_data/Cats.zip')
-      };
-    Object.assign(createClassifierParams, params);
-    this.discoveryClient.createClassifier(createClassifierParams, (err, response) => {
+        Beagle_positive_examples: fs.createReadStream('./dog_data/Beagle.zip'),
+        Husky_positive_examples: fs.createReadStream('./dog_data/Husky.zip'), 
+        GoldenRetriever_positive_examples: fs.createReadStream('./dog_data/GoldenRetriever.zip'),
+        negative_examples: fs.createReadStream('./dog_data/Cats.zip')
+      }
+    this.vizRecClient.createClassifier(createClassifierParams, (err, response) => {
       if (err) {
         console.error('Failed to create VisualRecognition classifier.');
         return reject(err);
@@ -107,6 +108,7 @@ WatsonVisRecSetup.prototype.createVisRecClassifier = function(params) {
  */
 WatsonVisRecSetup.prototype.setupVisRec = function(setupParams, callback) {
  this.getVisRecList(setupParams)
+    .catch(console.log("No exisiting classifier, creating..."))
     .then(params => this.createVisRecClassifier(params))
     .then(params => callback(null, params))
     .catch(callback);

@@ -148,8 +148,8 @@ function handleSetupError(reason) {
   console.error('The app failed to initialize properly. Setup and restart needed.' + setupError);
   // We could allow our chatbot to run. It would just report the above error.
   // Or we can add the following 2 lines to abort on a setup error allowing Bluemix to restart it.
-  console.error('\nAborting due to setup error!');
-  process.exit(1);
+  //console.error('\nAborting due to setup error!');
+  //process.exit(1);
 }
 
 //console.log("before: custom_class: " + custom_classifier);
