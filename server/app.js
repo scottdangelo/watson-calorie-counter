@@ -26,6 +26,7 @@ const formidable = require("formidable");
 const vcapServices = require("vcap_services");
 const credentials = vcapServices.getCredentials("watson_vision_combined");
 const child_process = require("child_process");
+const WatsonVisRecSetup= require('./lib/watson-visRec-setup');
 
 const visual_recognition = watson.visual_recognition({
     api_key: "f2e7cae6557d6386aaa13465545062319f84fa0d",
@@ -35,6 +36,43 @@ const visual_recognition = watson.visual_recognition({
 
 var custom_classifier = null;
 
+// setupError will be set to an error message if we cannot recover from service setup or init error.
+let setupError = '';
+
+//const visRecCredentials = vcapServices.getCredentials('visRec');
+
+//const visRec = watson.visRec({
+// password: visRecCredentials.password,
+//  username: visRecCredentials.username,
+//  version_date: '2017-04-27',
+//  version: 'v1'
+//});
+
+let visRecParams; // visRecParams will be set after WatsonVisRecSetup is run and callback is issued
+const visRecSetup = new WatsonVisRecSetup(visual_recognition);
+//const visRecSetup = new WatsonVisRecSetup(visRec);
+const visRecSetupParams = {
+  "classifiers": [
+    {
+      "classifier_id": "",
+      "name": "dogs",
+      "status": "ready"
+    }
+  ]
+}
+
+visRecSetup.setupVisRec(visRecSetupParams, (err, data) => {
+  console.log("Enter init setup in app.js")
+  if (err) {
+    handleSetupError(err);
+  } else {
+    console.log('Visual Recognition is ready!');
+    visRecParams = data;
+  }
+});
+
+
+console.log("After setupVisRec visRecParams: " + visRecParams)
 /**
 * promises
 *
@@ -68,6 +106,7 @@ function listClassifiersPromise(){
           console.log("custom_classifier: " + custom_classifier);
           }
           resolve(JSON.parse(JSON.stringify(response)));
+          return;
         } //end else
       })
   })
@@ -78,7 +117,7 @@ function CreateClassifierPromise(){
     console.log("CreateClassifierPromise custom_classifier: " + custom_classifier);
     if (custom_classifier){
       resolve();
-      console.log("Have customClassifier, resolve and return"):
+      console.log("Have customClassifier, resolve and return");
       return;
     }
     else{
@@ -109,31 +148,37 @@ function pollListClassifiersPromise(){
   var class_id;
   var classifiers;
   var i = 0;
+  console.log("enter pollListClassifiersPromise");
   return new Promise(function(resolve, reject){
-    while (i<10 && custom_classifer = null){
-    visual_recognition.listClassifiers({},
-      function(err, response) {
-        if(err)
-          reject(err);
-        else{
-          if (classifiers[0] == null || classifiers[0] == undefined) {
-            console.log("model building iteration: " + i)
-            child_process.execSync("sleep 5");
-            i++;
-            continue;
+    while (i<10 && custom_classifer == null){
+      visual_recognition.listClassifiers({},
+        function(err, response) {
+          if(err)
+            reject(err);
+          else
+            return(reponse);
           }
-          class_id = JSON.parse(JSON.stringify(response)).classifiers[0]["classifier_id"]; 
-          console.log("Created class_id: " + class_id);
-          if (~class_id.indexOf('dogs')){
-          custom_classifier = class_id
-          console.log("Created custom_classifier: " + custom_classifier);
-          }
-          resolve(JSON.parse(JSON.stringify(response)));
-          return;
-        } //end else
-      })
-  }//end while
-  })
+       )
+
+     if (classifiers[0] == null || classifiers[0] == undefined){
+       console.log("model building iteration: " + i)
+       child_process.execSync("sleep 5");
+       i++;
+       continue;
+      }
+
+      class_id = JSON.parse(JSON.stringify(response)).classifiers[0]["classifier_id"]; 
+      console.log("Created class_id: " + class_id);
+      if (~class_id.indexOf('dogs')){
+        custom_classifier = class_id
+        console.log("Created custom_classifier: " + custom_classifier);
+        continue;
+      }
+    } //end while
+
+    resolve();
+    return;
+  }) // end return promise
 }
 
 function init_class(){
@@ -142,26 +187,24 @@ function init_class(){
   .then(pollListClassifiersPromise());
 }
 
-function init_classifier(){
-  var checkExistingClassifier = listClassifiersPromise();
-  var class_id;
+/**
+ * Handle setup errors by logging and appending to the global error text.
+ * @param {String} reason - The error message for the setup error.
+ */
+function handleSetupError(reason) {
+  setupError += ' ' + reason;
+  console.error('The app failed to initialize properly. Setup and restart needed.' + setupError);
+  // We could allow our chatbot to run. It would just report the above error.
+  // Or we can add the following 2 lines to abort on a setup error allowing Bluemix to restart it.
+  console.error('\nAborting due to setup error!');
+  process.exit(1);
+}
 
-  checkExistingClassifier.then(function(result){
-    class_id = JSON.parse(JSON.stringify(result)).classifiers[0]["classifier_id"]; 
-    console.log("class_id: " + class_id);
-    if (~class_id.indexOf('dogs')){
-     custom_classifier = class_id
-     console.log("custom_classifier: " + custom_classifier);
-     }
-  })
-  .catch(function(error){
-    console.log("not found. Create one");
-  });
-   
-};
-  
 console.log("before: custom_class: " + custom_classifier);
-init_class();
+//init_class();
+//listClassifiersPromise()
+//.then(CreateClassifierPromise())
+//.then(pollListClassifiersPromise());
 console.log("after: custom_class: " + custom_classifier);
 
 application.use(express.static(__dirname + "/public"));
@@ -190,6 +233,22 @@ application.post("/uploadpic", function (req, result) {
     });
 });
 const port = process.env.PORT || process.env.VCAP_APP_PORT || 3000;
+
+/*
+if (~visRecParams || ~visRecParams.classifier_id){
+  var i = 0;
+  console.log("Custom Classifier still building...");
+    while(i<50 && (~visRecParams || ~visRecParams.classifier_id)){
+       console.log("model building iteration: " + i);
+       child_process.execSync("sleep 5");
+       i++;
+    }
+  if(~visRecParams || ~visRecParams.classifier_id){
+    const msg = "Custom Classifier did not build in " + i*5 + " seconds";
+    handleSetupError(msg);   
+  }
+}
+*/
 application.listen(port, function () {
     console.log("Server running on port: %d", port);
 });
