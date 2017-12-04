@@ -73,7 +73,7 @@ WatsonVisRecSetup.prototype.getVisRecList = function(params) {
  * @return {Promise}
  */
 WatsonVisRecSetup.prototype.createVisRecClassifier = function(params) {
-  console.log("createVisRecClassifier: enter"):
+  console.log("createVisRecClassifier: enter");
   if (params.classifier_id) {
     return Promise.resolve(params);
   }
@@ -95,7 +95,7 @@ WatsonVisRecSetup.prototype.createVisRecClassifier = function(params) {
       } else {
         console.log('Created VisualRecognition classifier: ', response);
     //    params.classifier_id = response.classifier_id;
-        resolve(params);
+        resolve(response);
       }
     });
   });

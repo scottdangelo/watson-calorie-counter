@@ -67,10 +67,32 @@ visRecSetup.setupVisRec(visRecSetupParams, (err, data) => {
     handleSetupError(err);
   } else {
     console.log('Visual Recognition is ready!');
+    console.log('data: ' + data);
+    console.log('data.classifier_id: ' + data.classifier_id);
     visRecParams = data;
+    custom_classifier = data.classifier_id;
   }
 });
 
+
+/*
+if (~visRecParams || ~visRecParams.classifier_id){
+  console.log("if statement visRecParams: " + visRecParams);
+  var i = 0;
+  console.log("Custom Classifier still building...");
+    while(i<50 && (~visRecParams || ~visRecParams.classifier_id)){
+       console.log("while statement visRecParams: " + visRecParams);
+       console.log("model building iteration: " + i);
+       child_process.execSync("sleep 5");
+       i++;
+    }
+  if(~visRecParams || ~visRecParams.classifier_id){
+    const msg = "Custom Classifier did not build in " + i*5 + " seconds";
+    handleSetupError(msg);   
+  }
+}
+*/
+child_process.execSync("sleep 15");
 
 console.log("After setupVisRec visRecParams: " + visRecParams)
 /**
@@ -234,21 +256,6 @@ application.post("/uploadpic", function (req, result) {
 });
 const port = process.env.PORT || process.env.VCAP_APP_PORT || 3000;
 
-/*
-if (~visRecParams || ~visRecParams.classifier_id){
-  var i = 0;
-  console.log("Custom Classifier still building...");
-    while(i<50 && (~visRecParams || ~visRecParams.classifier_id)){
-       console.log("model building iteration: " + i);
-       child_process.execSync("sleep 5");
-       i++;
-    }
-  if(~visRecParams || ~visRecParams.classifier_id){
-    const msg = "Custom Classifier did not build in " + i*5 + " seconds";
-    handleSetupError(msg);   
-  }
-}
-*/
 application.listen(port, function () {
     console.log("Server running on port: %d", port);
 });
