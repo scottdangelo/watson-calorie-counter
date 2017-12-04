@@ -92,79 +92,9 @@ if (~visRecParams || ~visRecParams.classifier_id){
   }
 }
 */
-child_process.execSync("sleep 15");
+//child_process.execSync("sleep 15");
 
-console.log("After setupVisRec visRecParams: " + visRecParams)
-/**
-* promises
-*
-* get classifiers. Set global
-* create classifier. IF global set, return it
-* test classifier. Use global, or get first and then use
-* 
-* create funtion to chain them all...
-*/
-
-function listClassifiersPromise(){
-  var class_id;
-  var classifiers;
-  return new Promise(function(resolve, reject){
-    visual_recognition.listClassifiers({},
-      function(err, response) {
-        if(err)
-          reject(err);
-        else{
-          classifiers = JSON.parse(JSON.stringify(response)).classifiers;
-          console.log("classifiers: " + classifiers[0]);
-          if (classifiers[0] == null || classifiers[0] == undefined) {
-            console.log("got here")
-            resolve();
-            return;
-          }
-          class_id = JSON.parse(JSON.stringify(response)).classifiers[0]["classifier_id"]; 
-          console.log("class_id: " + class_id);
-          if (~class_id.indexOf('dogs')){
-          custom_classifier = class_id
-          console.log("custom_classifier: " + custom_classifier);
-          }
-          resolve(JSON.parse(JSON.stringify(response)));
-          return;
-        } //end else
-      })
-  })
-}
-  
-function CreateClassifierPromise(){
-  return new Promise(function(resolve, reject){
-    console.log("CreateClassifierPromise custom_classifier: " + custom_classifier);
-    if (custom_classifier){
-      resolve();
-      console.log("Have customClassifier, resolve and return");
-      return;
-    }
-    else{
-      var params = {
-        name: 'dogs',
-        Beagle_positive_examples: fs.createReadStream('./dog_data/Beagle.zip'),
-        Husky_positive_examples: fs.createReadStream('./dog_data/Husky.zip'), 
-        GoldenRetriever_positive_examples: fs.createReadStream('./dog_data/GoldenRetriever.zip'),
-        negative_examples: fs.createReadStream('./dog_data/Cats.zip')
-      };
-
-    visual_recognition.createClassifier(params,
-      function(err, response) {
-        if (err){
-          console.log(err);
-          reject(err);
-        }
-        else{
-          console.log(JSON.stringify(response, null, 2));
-          resolve();
-        }
-      });
-  }
-});
-};
+//console.log("After setupVisRec visRecParams: " + visRecParams)
 
 function pollListClassifiersPromise(){
   var class_id;
@@ -222,12 +152,12 @@ function handleSetupError(reason) {
   process.exit(1);
 }
 
-console.log("before: custom_class: " + custom_classifier);
+//console.log("before: custom_class: " + custom_classifier);
 //init_class();
 //listClassifiersPromise()
 //.then(CreateClassifierPromise())
 //.then(pollListClassifiersPromise());
-console.log("after: custom_class: " + custom_classifier);
+//console.log("after: custom_class: " + custom_classifier);
 
 application.use(express.static(__dirname + "/public"));
 application.post("/uploadpic", function (req, result) {
@@ -240,7 +170,8 @@ application.post("/uploadpic", function (req, result) {
             const filePath = JSON.parse(JSON.stringify(files));
             const params = {
                 image_file: fs.createReadStream(filePath.myPhoto.path),
-                classifier_ids: [custom_classifier],
+                classifier_ids: [custom_classifier] || "",
+                //classifier_ids: ["dogs_848302304"],
                 threshold: 0
             };
             visual_recognition.classify(params, function (err, res) {
